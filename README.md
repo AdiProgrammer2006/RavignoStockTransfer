@@ -83,4 +83,4 @@ dotnet test
 
 ## Time Spent
 
-[Enter your actual development time.]
+2 hrs and 30 mins
