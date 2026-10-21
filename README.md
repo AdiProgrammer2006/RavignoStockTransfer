@@ -1,4 +1,4 @@
-# Mihira Stores — Stock Transfer System
+# Mihira Stores - Stock Transfer System
 
 A simple stock-transfer management application built with ASP.NET Core Web API, Entity Framework Core, SQLite, HTML, CSS, and JavaScript.
 
