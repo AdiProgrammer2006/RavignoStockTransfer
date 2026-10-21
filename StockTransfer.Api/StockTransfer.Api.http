@@ -1,0 +1,6 @@
+@StockTransfer.Api_HostAddress = http://localhost:5098
+
+GET {{StockTransfer.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

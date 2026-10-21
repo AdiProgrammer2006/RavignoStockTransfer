@@ -1,0 +1,218 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+    <title>Mihira Stores - Stock Transfer</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 30px;
+            background: #f5f5f5;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: auto;
+        }
+
+        .card {
+            background: white;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+        }
+
+        input, select, button {
+            padding: 10px;
+            margin: 5px;
+        }
+
+        button {
+            background: #2563eb;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 10px;
+            border: 1px solid #ddd;
+            text-align: left;
+        }
+
+        .error { color: red; }
+        .success { color: green; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>Mihira Stores - Stock Transfer</h1>
+
+    <div class="card">
+        <h2>Branch Stock</h2>
+        <select id="branchSelect">
+            <option value="1">Colombo</option>
+            <option value="2">Kandy</option>
+            <option value="3">Galle</option>
+        </select>
+        <button onclick="loadStock()">View Stock</button>
+        <div id="stockResult"></div>
+    </div>
+
+    <div class="card">
+        <h2>Transfer Stock</h2>
+
+        <label>From Branch</label>
+        <select id="fromBranch">
+            <option value="1">Colombo</option>
+            <option value="2">Kandy</option>
+            <option value="3">Galle</option>
+        </select>
+
+        <label>To Branch</label>
+        <select id="toBranch">
+            <option value="2">Kandy</option>
+            <option value="1">Colombo</option>
+            <option value="3">Galle</option>
+        </select>
+
+        <label>Product</label>
+        <select id="product">
+            <option value="1">Rice</option>
+            <option value="2">Sugar</option>
+            <option value="3">Milk Powder</option>
+            <option value="4">Tea</option>
+            <option value="5">Flour</option>
+        </select>
+
+        <label>Quantity</label>
+        <input type="number" id="quantity" min="1" value="1">
+
+        <button onclick="transferStock()">Transfer</button>
+
+        <p id="message"></p>
+    </div>
+
+    <div class="card">
+        <h2>Transfer History</h2>
+        <button onclick="loadTransfers()">Refresh History</button>
+        <div id="transferHistory"></div>
+    </div>
+</div>
+
+<script>
+    const branchNames = {
+        1: "Colombo",
+        2: "Kandy",
+        3: "Galle"
+    };
+
+    const productNames = {
+        1: "Rice",
+        2: "Sugar",
+        3: "Milk Powder",
+        4: "Tea",
+        5: "Flour"
+    };
+
+    async function loadStock() {
+        const id = document.getElementById("branchSelect").value;
+        const result = document.getElementById("stockResult");
+
+        try {
+            const response = await fetch(`/branches/${id}/stock`);
+            if (!response.ok) throw new Error("Failed to load stock");
+
+            const data = await response.json();
+
+            let html = "<table><tr><th>Product</th><th>Quantity</th></tr>";
+
+            data.stock.forEach(item => {
+                html += `<tr><td>${item.productName}</td>
+                         <td>${item.quantity}</td></tr>`;
+            });
+
+            html += "</table>";
+            result.innerHTML = html;
+        } catch (error) {
+            result.textContent = error.message;
+        }
+    }
+
+    async function transferStock() {
+        const message = document.getElementById("message");
+
+        const body = {
+            fromBranchId: Number(document.getElementById("fromBranch").value),
+            toBranchId: Number(document.getElementById("toBranch").value),
+            productId: Number(document.getElementById("product").value),
+            quantity: Number(document.getElementById("quantity").value)
+        };
+
+        try {
+            const response = await fetch("/transfers", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(body)
+            });
+
+            const data = await response.json();
+
+            message.textContent = data.message;
+            message.className = response.ok ? "success" : "error";
+
+            if (response.ok) {
+                await loadStock();
+                await loadTransfers();
+            }
+        } catch (error) {
+            message.textContent = error.message;
+            message.className = "error";
+        }
+    }
+
+    async function loadTransfers() {
+        const result = document.getElementById("transferHistory");
+
+        try {
+            const response = await fetch("/transfers");
+            if (!response.ok) throw new Error("Failed to load history");
+
+            const transfers = await response.json();
+
+            if (transfers.length === 0) {
+                result.textContent = "No transfers yet.";
+                return;
+            }
+
+            let html = "<table><tr><th>From</th><th>To</th><th>Product</th><th>Quantity</th></tr>";
+
+            transfers.forEach(t => {
+                html += `<tr>
+                    <td>${branchNames[t.fromBranchId]}</td>
+                    <td>${branchNames[t.toBranchId]}</td>
+                    <td>${productNames[t.productId]}</td>
+                    <td>${t.quantity}</td>
+                </tr>`;
+            });
+
+            html += "</table>";
+            result.innerHTML = html;
+        } catch (error) {
+            result.textContent = error.message;
+        }
+    }
+
+    loadStock();
+    loadTransfers();
+</script>
+</body>
+</html>
